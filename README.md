@@ -66,8 +66,7 @@ Distributed under the MIT License. See `LICENSE` for more information.
 
 <!-- CONTACT -->
 ## Contact
-
-Your Name - [@Fusion_API](https://twitter.com/Fusion_API) - support@fusionapi.dev
+FusionAPI - [@Fusion_API](https://twitter.com/Fusion_API) - support@fusionapi.dev
 
 Project Link: [https://github.com/FusionAPI/FusionAPI-CSharp](https://github.com/FusionAPI/FusionAPI-CSharp)
 
