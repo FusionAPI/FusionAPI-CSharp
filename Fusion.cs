@@ -38,9 +38,9 @@ namespace Fusion
             var g2faObject = JsonConvert.DeserializeObject<FusionResponse>(g2faContent);
 
             if (g2faObject.Session == "true")
-                User.ValidateMfa = true;
+                User.ValidateTwoFactor = true;
             else
-                User.ValidateMfa = false;
+                User.ValidateTwoFactor = false;
         }
         public async static Task RefreshApp()
         {
@@ -73,21 +73,16 @@ namespace Fusion
         public async Task<FusionResponse> Login(string username, string password, string g2fa = null, bool checkhwid = false, bool checkip = false)
         {
             await Check42FA(username);
-            var loginDictionary = new Dictionary<string, string>();
 
-            if (User.ValidateMfa == true)
+            var loginDictionary = new Dictionary<string, string>
             {
-                loginDictionary.Add("action", "login");
-                loginDictionary.Add("username", username);
-                loginDictionary.Add("password", password);
+                { "action", "login" },
+                { "username", username },
+                { "password", password }
+            };
+
+            if (User.ValidateTwoFactor == true)
                 loginDictionary.Add("2fa", g2fa);
-            }
-            else
-            {
-                loginDictionary.Add("action", "login");
-                loginDictionary.Add("username", username);
-                loginDictionary.Add("password", password);
-            }
 
             var loginSource = new FormUrlEncodedContent(loginDictionary);
             var loginResponse = await client.PostAsync(baseUrl, loginSource);
@@ -373,6 +368,92 @@ namespace Fusion
                 return new FusionResponse { Error = true, Message = "Response Was Not Valid" };
             }
         }
+        public static async Task<ChatRoot> GetChat()
+        {
+            var getChatDictionary = new Dictionary<string, string>
+            {
+                { "action", "get-app-chat" },
+                { "session", session }
+            };
+
+            var getChatSource = new FormUrlEncodedContent(getChatDictionary);
+            var getChatResponse = await client.PostAsync(baseUrl, getChatSource);
+            var getChatContent = await getChatResponse.Content.ReadAsStringAsync();
+            ChatRoot chatRoot = JsonConvert.DeserializeObject<ChatRoot>(getChatContent);
+            return chatRoot;
+        }
+        public static async Task<ManageMessageResponse> DeleteMessage(string messageid)
+        {
+            var deleteMessageDictionary = new Dictionary<string, string>
+            {
+                { "action", "del-app-msg" },
+                { "mid", messageid },
+                { "session", session }
+            };
+
+            var deleteMessageSource = new FormUrlEncodedContent(deleteMessageDictionary);
+            var deleteMessageResponse = await client.PostAsync(baseUrl, deleteMessageSource);
+            var deleteMessageContent = await deleteMessageResponse.Content.ReadAsStringAsync();
+            ManageMessageResponse deleteMsgResponse = JsonConvert.DeserializeObject<ManageMessageResponse>(deleteMessageContent);
+            return deleteMsgResponse;
+        }
+        public static async Task<ManageMessageResponse> EditMessage(string messageid, string newmessage)
+        {
+            var editMessageDictionary = new Dictionary<string, string>
+            {
+                { "action", "edit-app-msg" },
+                { "mid", messageid },
+                { "content", newmessage },
+                { "session", session }
+            };
+
+            var editMessageSource = new FormUrlEncodedContent(editMessageDictionary);
+            var editMessageResponse = await client.PostAsync(baseUrl, editMessageSource);
+            var editMessageContent = await editMessageResponse.Content.ReadAsStringAsync();
+            ManageMessageResponse deleteMsgResponse = JsonConvert.DeserializeObject<ManageMessageResponse>(editMessageContent);
+            return deleteMsgResponse;
+        }
+        public static async Task<MessageRoot> SendMessage(string content)
+        {
+            var sendMessageDictionary = new Dictionary<string, string>
+            {
+                { "action", "send-app-msg" },
+                { "session", session },
+                { "message", content }
+            };
+
+            var sendMessageSource = new FormUrlEncodedContent(sendMessageDictionary);
+            var sendMessageResponse = await client.PostAsync(baseUrl, sendMessageSource);
+            var sendMessageContent = await sendMessageResponse.Content.ReadAsStringAsync();
+            MessageRoot messageRoot = JsonConvert.DeserializeObject<MessageRoot>(sendMessageContent);
+            return messageRoot;
+        }
+    }
+
+    public class MessageRoot
+    {
+        [JsonProperty("error")] public bool Error { get; set; }
+        [JsonProperty("id")] public string Id { get; set; }
+        [JsonProperty("message")] public string Message { get; set; }
+    }
+    public class ManageMessageResponse
+    {
+        [JsonProperty("error")] public bool Error { get; set; }
+        [JsonProperty("message")] public string Message { get; set; }
+    }
+    public class ChatResponse
+    {
+        [JsonProperty("author")] public List<string> Author { get; set; }
+        [JsonProperty("content")] public string Content { get; set; }
+        [JsonProperty("edited")] public bool Edited { get; set; }
+        [JsonProperty("message-id")] public string MessageId { get; set; }
+        [JsonProperty("timestamp")] public int Timestamp { get; set; }
+    }
+    public class ChatRoot
+    {
+        [JsonProperty("chat")] public List<ChatResponse> Chat { get; set; }
+        [JsonProperty("error")] public bool Error { get; set; }
+        [JsonProperty("message")] public string Message { get; set; }
     }
 
     public class AppBlob
@@ -440,7 +521,7 @@ namespace Fusion
     }
     public struct User
     {
-        public static bool ValidateMfa = false;
+        public static bool ValidateTwoFactor = false;
         public static string MfaCode;
         public static string Ip;
         public static string HardwareId;
