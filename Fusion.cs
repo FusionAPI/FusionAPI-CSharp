@@ -91,7 +91,10 @@ namespace Fusion
             try
             {
                 var resp = JsonConvert.DeserializeObject<FusionResponse>(loginContent);
-                if (!resp.Error) session = resp.Session;
+                if (resp.Error)
+                        return resp;
+
+                session = resp.Session;
 
                 #region "Get User Blob"
                 var userBlobDictionary = new Dictionary<string, string>
