@@ -1,8 +1,10 @@
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Security.Principal;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace Fusion
@@ -92,7 +94,7 @@ namespace Fusion
             {
                 var resp = JsonConvert.DeserializeObject<FusionResponse>(loginContent);
                 if (resp.Error)
-                        return resp;
+                    return resp;
 
                 session = resp.Session;
 
@@ -108,7 +110,7 @@ namespace Fusion
                 var userObject = JsonConvert.DeserializeObject<UserRoot>(userBlobContent);
 
                 string expdate;
-                try { expdate = DateTimeOffset.FromUnixTimeSeconds(long.Parse(userObject.Blob.Expiry)).DateTime.ToString(); } catch { expdate = "N/a"; }
+                try { expdate = DateTimeOffset.FromUnixTimeSeconds((long)Convert.ToDouble(userObject.Blob.Expiry)).DateTime.ToString(); } catch { expdate = "N/a"; }
 
                 User.MfaCode = userObject.Blob.TwoFactorCode;
                 User.Ip = await GetIp();
@@ -142,7 +144,7 @@ namespace Fusion
                 {
                     try
                     {
-                        if (!string.Equals(GetUserVar("hwid"), User.HardwareId))
+                        if (!string.Equals(await GetUserVar("hwid"), User.HardwareId))
                         {
                             Environment.Exit(0);
                         }
@@ -156,7 +158,7 @@ namespace Fusion
                 {
                     try
                     {
-                        if (!string.Equals(GetUserVar("ip"), User.Ip))
+                        if (!string.Equals(await GetUserVar("ip"), User.Ip))
                         {
                             Environment.Exit(0);
                         }
