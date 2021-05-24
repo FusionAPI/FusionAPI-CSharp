@@ -1,10 +1,8 @@
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net.Http;
 using System.Security.Principal;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Fusion
@@ -140,32 +138,26 @@ namespace Fusion
                 #endregion
 
                 #region "Verify Hardware ID & IP"
-                if (checkhwid == true)
+                if (checkhwid)
                 {
-                    try
+                    if (await GetUserVar("hwid") == "Invalid Var")
                     {
-                        if (!string.Equals(await GetUserVar("hwid"), User.HardwareId))
-                        {
-                            Environment.Exit(0);
-                        }
+                        await SetUserVar("hwid", GetHwid());
                     }
-                    catch
+                    else if (await GetUserVar("hwid") != GetHwid())
                     {
-                        await SetUserVar("hwid", User.HardwareId);
+                        return new FusionResponse { Error = true, Message = "Invalid User Hwid" };
                     }
                 }
-                if (checkip == true)
+                if (checkip)
                 {
-                    try
+                    if (await GetUserVar("ip") == "Invalid Var")
                     {
-                        if (!string.Equals(await GetUserVar("ip"), User.Ip))
-                        {
-                            Environment.Exit(0);
-                        }
+                        await SetUserVar("ip", await GetIp());
                     }
-                    catch
+                    else if (await GetUserVar("ip") != await GetIp())
                     {
-                        await SetUserVar("ip", User.Ip);
+                        return new FusionResponse { Error = true, Message = "Invalid User IP" };
                     }
                 }
                 #endregion
